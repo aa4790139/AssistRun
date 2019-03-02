@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,7 +22,7 @@ namespace AssistRun
     public class Program
     {
         private const int N_CHECK_GAP_TIME = 1000;//5秒
-        private const int N_RUN_GAP_MAX_TIME = 30;//30秒
+        private const int N_RUN_GAP_MAX_TIME = 10;//30秒
         private const string STR_RUN_FILE = "Run.data";
         private static string m_assitProcessName = "";
         private static bool m_bCheck = false;
@@ -46,8 +47,10 @@ namespace AssistRun
                 Environment.Exit(0);
                 return;
             }
-
             m_assitProcessName = args[0];
+            
+            //0.清理之前日志
+            __DeleteLastLog();
             __Log("m_assitProcessName=" + m_assitProcessName);
             __Log("-----------------------------------");
             __Log("0.启动辅助运行程序");
@@ -59,33 +62,19 @@ namespace AssistRun
 
             //2.开启线程
             __StartThread();
-
-            Console.ReadKey();
         }
+
         //-------------------------------------------------------------------------
         #endregion
 
         #region Private Method
         //-------------------------------------------------------------------------
-        private static Process[] GetCurRunProcess()
+        private static void __DeleteLastLog()
         {
-            Process[] processes = Process.GetProcesses();
-            StringBuilder builder = new StringBuilder();
-            foreach (Process p in processes)
+            if (File.Exists(strLogFilePath))
             {
-                try
-                {
-                    builder.AppendLine("名称：" + p.ProcessName + "，启动时间：" + p.StartTime.ToShortTimeString() + "，进程ID：" + p.Id.ToString());
-                }
-                catch (Exception)
-                {
-                    //builder.Append(ex.Message.ToString());//某些系统进程禁止访问，所以要加异常处理
-                }
+                File.Delete(strLogFilePath);
             }
-
-            __Log(builder.ToString());
-
-            return processes;
         }
         //-------------------------------------------------------------------------
         private static void __KillProcessByName(string strProcessName)
@@ -168,20 +157,23 @@ namespace AssistRun
         //-------------------------------------------------------------------------
         private static void __StartThread()
         {
-            if (null == m_thread)
+            m_bRunning = true;
+            __Run();
+
+            /*if (null == m_thread)
             {
-                m_bRunning = true;
+                //说明：主线程跑完，代表程序的结束，程序结束子线程自然就会停止，所以不能用子线程。
                 m_thread = new Thread(__Run);
+                m_thread.IsBackground = true;
                 m_thread.Start();
                 __Log("-----------------------------------");
                 __Log("2.开启检查线程");
                 __Log("-----------------------------------");
-            }
+            }*/
         }
         //-------------------------------------------------------------------------
         private static void __Run()
         {
-            __Log("__Run----------------------------------->");
             while (m_bRunning)
             {
                 try
@@ -205,15 +197,20 @@ namespace AssistRun
         {
             if (false == m_bCheck)
             {
+                __Log("__CheckRun：bCheck is fails !");
                 return;
             }
 
+            __Log("-----------------------------------");
+            __Log("3.检测运行状态");
+            __Log("-----------------------------------");
             int nNowTimeStamp = __GetTimeStamp(DateTime.Now);
             __Log("m_nLastRunTimeStamp" + (m_nLastRunTimeStamp));
             __Log("nNowTimeStamp" + (nNowTimeStamp));
             __Log("nNowTimeStamp - m_nLastRunTimeStamp=" + (nNowTimeStamp - m_nLastRunTimeStamp));
             if (nNowTimeStamp - m_nLastRunTimeStamp > N_RUN_GAP_MAX_TIME)
             {
+                __Log("__CheckRun:Over Max Gap Time !");
                 __KillProcessByName(m_assitProcessName);
                 __RebootProcess();
 
