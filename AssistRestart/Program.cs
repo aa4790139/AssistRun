@@ -26,7 +26,7 @@ namespace AssitRestart
             string strCurProcessPath = Process.GetCurrentProcess().MainModule.FileName;
             Console.WriteLine("strCurProcessPath=" + strCurProcessPath);
 
-            string strDefaultPath = System.Environment.CurrentDirectory + "\\..\\..\\..\\";
+            string strDefaultPath = System.Environment.CurrentDirectory;
             Console.WriteLine("strDefaultPath=" + strDefaultPath);
 
             string strPath = __GetEXEPath(strDefaultPath);

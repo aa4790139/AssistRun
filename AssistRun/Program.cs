@@ -20,7 +20,7 @@ namespace AssistRun
 {
     public class Program
     {
-        private const int N_CHECK_GAP_TIME = 5000;//5秒
+        private const int N_CHECK_GAP_TIME = 1000;//5秒
         private const int N_RUN_GAP_MAX_TIME = 30;//30秒
         private const string STR_RUN_FILE = "Run.data";
         private static string m_assitProcessName = "";
@@ -30,35 +30,37 @@ namespace AssistRun
         private static Thread m_thread = null;
 
         private static DateTime m_startTime = new DateTime(1970, 1, 1).ToLocalTime();
+        private static StringBuilder m_builder = new StringBuilder();
+        private static bool m_bLog = true;
+        private static string strLogFilePath = "";
 
         #region Public Method
         //-------------------------------------------------------------------------
         public static void Main(string[] args)
         {
+            strLogFilePath = "AssistRun.txt";
             //0.保存需要辅助的程序名称
-            /*if (null == args || args.Length <= 0)
+            if (null == args || args.Length <= 0)
             {
-                Console.WriteLine("Start params args is null or Empty !");
+                __Log("Start params args is null or Empty !");
                 Environment.Exit(0);
                 return;
             }
 
-            m_assitProcessName = args[0];*/
-
-            m_assitProcessName = "Render";
-
-            Console.WriteLine("-----------------------------------");
-            Console.WriteLine("0.启动辅助运行程序");
-            Console.WriteLine("-----------------------------------");
-            Console.WriteLine("需要辅助运行程序：" + m_assitProcessName);
+            m_assitProcessName = args[0];
+            __Log("m_assitProcessName=" + m_assitProcessName);
+            __Log("-----------------------------------");
+            __Log("0.启动辅助运行程序");
+            __Log("-----------------------------------");
+            __Log("需要辅助运行程序：" + m_assitProcessName);
 
             //1.干掉同名的其他进程
             __KillSameOtherProcess();
 
             //2.开启线程
-            //__StartThread();
+            __StartThread();
 
-            Console.Read();
+            Console.ReadKey();
         }
         //-------------------------------------------------------------------------
         #endregion
@@ -81,16 +83,16 @@ namespace AssistRun
                 }
             }
 
-            Console.WriteLine(builder.ToString());
+            __Log(builder.ToString());
 
             return processes;
         }
         //-------------------------------------------------------------------------
         private static void __KillProcessByName(string strProcessName)
         {
-            Console.WriteLine("-----------------------------------");
-            Console.WriteLine("3.干掉卡死的程序：" + strProcessName);
-            Console.WriteLine("-----------------------------------");
+            __Log("-----------------------------------");
+            __Log("3.干掉卡死的程序：" + strProcessName);
+            __Log("-----------------------------------");
             Process[] processes = Process.GetProcesses();
             foreach (var process in processes)
             {
@@ -113,10 +115,11 @@ namespace AssistRun
         private static void __KillSameOtherProcess()
         {
             Process curProcess = Process.GetCurrentProcess();
-            Console.WriteLine("-----------------------------------");
-            Console.WriteLine("1.干掉同名的其他进程");
-            Console.WriteLine("-----------------------------------");
-            Console.WriteLine("当前进程号: " + curProcess.Id);
+            __Log("-----------------------------------");
+            __Log("1.干掉同名的其他进程");
+            __Log("-----------------------------------");
+            __Log("当前进程号: " + curProcess.Id);
+            __Log("当前进程名: " + curProcess.ProcessName);
 
             Process[] processes = Process.GetProcesses();
             foreach (var process in processes)
@@ -134,33 +137,33 @@ namespace AssistRun
         //-------------------------------------------------------------------------
         private static void __ReadRunStatusFile()
         {
-            Console.WriteLine("-----------------------------------");
-            Console.WriteLine("2.读取运行状态文件");
-            Console.WriteLine("-----------------------------------");
+            __Log("-----------------------------------");
+            __Log("2.读取运行状态文件");
+            __Log("-----------------------------------");
             if (false == File.Exists(STR_RUN_FILE))
             {
-                Console.WriteLine("__ReadRunStatusFile:" + STR_RUN_FILE + " not Exists !");
+                __Log("__ReadRunStatusFile:" + STR_RUN_FILE + " not Exists !");
                 return;
             }
 
             string strContent = File.ReadAllText(STR_RUN_FILE);
             if (string.IsNullOrEmpty(strContent))
             {
-                Console.WriteLine("__ReadRunStatusFile:" + STR_RUN_FILE + " file content is NullOrEmpty !");
+                __Log("__ReadRunStatusFile:" + STR_RUN_FILE + " file content is NullOrEmpty !");
                 return;
             }
 
             string[] datas = strContent.Split('_');
             if (null == datas || datas.Length < 2)
             {
-                Console.WriteLine("__ReadRunStatusFile:" + STR_RUN_FILE + " file content Data Invalid ! strContent=" + strContent);
+                __Log("__ReadRunStatusFile:" + STR_RUN_FILE + " file content Data Invalid ! strContent=" + strContent);
                 return;
             }
 
             m_bCheck = int.Parse(datas[0]) == 1 ? true : false;
             m_nLastRunTimeStamp = int.Parse(datas[1]);
 
-            Console.WriteLine("__ReadRunStatusFile:m_bCheck=" + m_bCheck + ",m_nLastRunTimeStamp=" + m_nLastRunTimeStamp);
+            __Log("__ReadRunStatusFile:m_bCheck=" + m_bCheck + ",m_nLastRunTimeStamp=" + m_nLastRunTimeStamp);
         }
         //-------------------------------------------------------------------------
         private static void __StartThread()
@@ -169,14 +172,16 @@ namespace AssistRun
             {
                 m_bRunning = true;
                 m_thread = new Thread(__Run);
-                Console.WriteLine("-----------------------------------");
-                Console.WriteLine("2.开启检查线程");
-                Console.WriteLine("-----------------------------------");
+                m_thread.Start();
+                __Log("-----------------------------------");
+                __Log("2.开启检查线程");
+                __Log("-----------------------------------");
             }
         }
         //-------------------------------------------------------------------------
         private static void __Run()
         {
+            __Log("__Run----------------------------------->");
             while (m_bRunning)
             {
                 try
@@ -186,11 +191,12 @@ namespace AssistRun
 
                     //4.是否开启检查
                     __CheckRun();
+
                     Thread.Sleep(N_CHECK_GAP_TIME);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-
+                    __Log("__Run: exMsg=" + ex.Message + ",StackTrace=" + ex.StackTrace);
                 }
             }
         }
@@ -203,10 +209,14 @@ namespace AssistRun
             }
 
             int nNowTimeStamp = __GetTimeStamp(DateTime.Now);
+            __Log("m_nLastRunTimeStamp" + (m_nLastRunTimeStamp));
+            __Log("nNowTimeStamp" + (nNowTimeStamp));
+            __Log("nNowTimeStamp - m_nLastRunTimeStamp=" + (nNowTimeStamp - m_nLastRunTimeStamp));
             if (nNowTimeStamp - m_nLastRunTimeStamp > N_RUN_GAP_MAX_TIME)
             {
                 __KillProcessByName(m_assitProcessName);
                 __RebootProcess();
+
                 m_bRunning = false;
                 Environment.Exit(0);
             }
@@ -214,14 +224,14 @@ namespace AssistRun
         //-------------------------------------------------------------------------
         private static void __RebootProcess()
         {
-            Console.WriteLine("-----------------------------------");
-            Console.WriteLine("4.重新启动程序");
-            Console.WriteLine("-----------------------------------");
+            __Log("-----------------------------------");
+            __Log("4.重新启动程序");
+            __Log("-----------------------------------");
             string strDefaultPath = System.Environment.CurrentDirectory;
-            Console.WriteLine("strDefaultPath=" + strDefaultPath);
+            __Log("strDefaultPath=" + strDefaultPath);
 
             string strRebootPath = __GetEXEPath(strDefaultPath);
-            Console.WriteLine("strRebootPath=" + strRebootPath);
+            __Log("strRebootPath=" + strRebootPath);
 
             __Reboot(strRebootPath);
         }
@@ -234,7 +244,7 @@ namespace AssistRun
                 return strPath;
             }
 
-            var filePaths = Directory.GetFiles(strDir, "*.*", SearchOption.AllDirectories);
+            var filePaths = Directory.GetFiles(strDir, "*.*", SearchOption.TopDirectoryOnly);
             for (int i = 0; i < filePaths.Length; i++)
             {
                 var strFilePath = filePaths[i];
@@ -257,6 +267,20 @@ namespace AssistRun
             }
 
             Process.Start(strPath);
+        }
+        //-------------------------------------------------------------------------
+        private static void __Log(string strMsg)
+        {
+            if (false == m_bLog)
+            {
+                return;
+            }
+
+            using (StreamWriter sw = File.AppendText(strLogFilePath))
+            {
+                string strDate = DateTime.Now.ToString("yyyy:MM:dd-hh:mm:ss");
+                sw.WriteLine(strDate + ":" + strMsg);
+            }
         }
         //-------------------------------------------------------------------------
         #endregion
