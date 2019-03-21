@@ -21,14 +21,14 @@ namespace AssistRun
 {
     public class Program
     {
-        private const int N_CHECK_GAP_TIME = 1000;//5秒
+        private const int N_CHECK_GAP_TIME = 5000;//5秒
         private const int N_RUN_GAP_MAX_TIME = 10;//30秒
         private const string STR_RUN_FILE = "Run.data";
         private static string m_assitProcessName = "";
         private static bool m_bCheck = false;
         private static int m_nLastRunTimeStamp = 0;
+        private static bool m_bForceReboot = false;
         private static bool m_bRunning = false;
-        private static Thread m_thread = null;
 
         private static DateTime m_startTime = new DateTime(1970, 1, 1).ToLocalTime();
         private static StringBuilder m_builder = new StringBuilder();
@@ -41,14 +41,15 @@ namespace AssistRun
         {
             strLogFilePath = "AssistRun.txt";
             //0.保存需要辅助的程序名称
-            if (null == args || args.Length <= 0)
+            if (null == args || args.Length < 2)
             {
                 __Log("Start params args is null or Empty !");
                 Environment.Exit(0);
                 return;
             }
             m_assitProcessName = args[0];
-            
+            m_bLog = bool.Parse(args[1]);
+
             //0.清理之前日志
             __DeleteLastLog();
             __Log("m_assitProcessName=" + m_assitProcessName);
@@ -151,25 +152,15 @@ namespace AssistRun
 
             m_bCheck = int.Parse(datas[0]) == 1 ? true : false;
             m_nLastRunTimeStamp = int.Parse(datas[1]);
+            m_bForceReboot = int.Parse(datas[2]) == 1 ? true : false;
 
-            __Log("__ReadRunStatusFile:m_bCheck=" + m_bCheck + ",m_nLastRunTimeStamp=" + m_nLastRunTimeStamp);
+            __Log("__ReadRunStatusFile: bCheck=" + m_bCheck + ",nLastRunTimeStamp=" + m_nLastRunTimeStamp + ",bForceReboot=" + m_bForceReboot);
         }
         //-------------------------------------------------------------------------
         private static void __StartThread()
         {
             m_bRunning = true;
             __Run();
-
-            /*if (null == m_thread)
-            {
-                //说明：主线程跑完，代表程序的结束，程序结束子线程自然就会停止，所以不能用子线程。
-                m_thread = new Thread(__Run);
-                m_thread.IsBackground = true;
-                m_thread.Start();
-                __Log("-----------------------------------");
-                __Log("2.开启检查线程");
-                __Log("-----------------------------------");
-            }*/
         }
         //-------------------------------------------------------------------------
         private static void __Run()
@@ -184,6 +175,9 @@ namespace AssistRun
                     //4.是否开启检查
                     __CheckRun();
 
+                    //5.检测是否退出
+                    __CheckExit();
+
                     Thread.Sleep(N_CHECK_GAP_TIME);
                 }
                 catch (Exception ex)
@@ -192,6 +186,7 @@ namespace AssistRun
                 }
             }
         }
+
         //-------------------------------------------------------------------------
         private static void __CheckRun()
         {
@@ -208,9 +203,11 @@ namespace AssistRun
             __Log("m_nLastRunTimeStamp" + (m_nLastRunTimeStamp));
             __Log("nNowTimeStamp" + (nNowTimeStamp));
             __Log("nNowTimeStamp - m_nLastRunTimeStamp=" + (nNowTimeStamp - m_nLastRunTimeStamp));
-            if (nNowTimeStamp - m_nLastRunTimeStamp > N_RUN_GAP_MAX_TIME)
+            __Log("bForceReboot=" + m_bForceReboot);
+
+            if (m_bForceReboot || nNowTimeStamp - m_nLastRunTimeStamp > N_RUN_GAP_MAX_TIME)
             {
-                __Log("__CheckRun:Over Max Gap Time !");
+                __Log("__CheckRun: RebootProcess===>");
                 __KillProcessByName(m_assitProcessName);
                 __RebootProcess();
 
@@ -264,6 +261,25 @@ namespace AssistRun
             }
 
             Process.Start(strPath);
+        }
+        //-------------------------------------------------------------------------
+        private static void __CheckExit()
+        {
+            __Log("-----------------------------------");
+            __Log("5.检测是否退出");
+            __Log("-----------------------------------");
+            string strDefaultPath = System.Environment.CurrentDirectory;
+            __Log("strDefaultPath=" + strDefaultPath);
+
+            string strEXEPath = __GetEXEPath(strDefaultPath);
+            __Log("strEXEPath=" + strEXEPath);
+            //程序被卸载或者主动退出===>退出程序
+            if (false == File.Exists(strEXEPath) || false == m_bCheck)
+            {
+                __Log("Exit AssitRun !");
+                m_bRunning = false;
+                Environment.Exit(0);
+            }
         }
         //-------------------------------------------------------------------------
         private static void __Log(string strMsg)
