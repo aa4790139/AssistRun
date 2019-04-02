@@ -53,6 +53,7 @@ namespace AssistRun
             //0.清理之前日志
             __DeleteLastLog();
             __Log("m_assitProcessName=" + m_assitProcessName);
+            __Log("m_bLog=" + m_bLog);
             __Log("-----------------------------------");
             __Log("0.启动辅助运行程序");
             __Log("-----------------------------------");
@@ -64,7 +65,6 @@ namespace AssistRun
             //2.开启线程
             __StartThread();
         }
-
         //-------------------------------------------------------------------------
         #endregion
 
