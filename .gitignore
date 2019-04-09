@@ -70,3 +70,14 @@ AssistRun/obj/Release/AssistRun.csproj.FileListAbsolute.txt
 AssistRun/obj/Release/DesignTimeResolveAssemblyReferencesInput.cache
 AssistRun/obj/Release/TemporaryGeneratedFile_036C0B5B-1481-4323-8D20-8F5ADCB23D92.cs
 AssistRun/obj/Release/TemporaryGeneratedFile_5937a670-0e60-4077-877b-f7221da3dda1.cs
+.vs/AssistRun/v14/.suo
+.vs/AssistRun/v15/.suo
+.vs/AssistRun/v15/Server/sqlite3/db.lock
+.vs/AssistRun/v15/Server/sqlite3/storage.ide
+.vs/AssistRun/v15/Server/sqlite3/storage.ide-shm
+.vs/AssistRun/v15/Server/sqlite3/storage.ide-wal
+AssistRun/bin/Debug/AssistRun.txt
+AssistRun/bin/Release/AssistRun.exe
+AssistRun/bin/Release/AssistRun.pdb
+AssistRun/bin/Release/AssistRun.txt
+AssistRun/obj/Debug/AssistRun.csprojResolveAssemblyReference.cache
