@@ -81,3 +81,5 @@ AssistRun/bin/Release/AssistRun.exe
 AssistRun/bin/Release/AssistRun.pdb
 AssistRun/bin/Release/AssistRun.txt
 AssistRun/obj/Debug/AssistRun.csprojResolveAssemblyReference.cache
+AssistRun/obj/Debug/AssistRun.csprojAssemblyReference.cache
+AssistRun/obj/Release/AssistRun.csprojResolveAssemblyReference.cache
