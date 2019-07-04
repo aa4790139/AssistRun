@@ -40,7 +40,7 @@ namespace AssistRun
         public static void Main(string[] args)
         {
             strLogFilePath = "AssistRun.txt";
-            //0.保存需要辅助的程序名称
+            //0.保存需要辅助的程序名称 
             if (null == args || args.Length < 2)
             {
                 __Log("Start params args is null or Empty !");
@@ -259,7 +259,20 @@ namespace AssistRun
                 return;
             }
 
-            Process.Start(strPath);
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.UseShellExecute = true;
+            startInfo.WorkingDirectory = Environment.CurrentDirectory;
+            startInfo.FileName = strPath;
+            //设置启动动作,确保以管理员身份运行
+            startInfo.Verb = "runas";
+            try
+            {
+                Process.Start(startInfo);
+            }
+            catch (Exception ex)
+            {
+                __Log("__Reboot: exception=" + ex.Message);
+            }
         }
         //-------------------------------------------------------------------------
         private static void __CheckExit()
