@@ -22,7 +22,7 @@ namespace AssistRun
     public class Program
     {
         private const int N_CHECK_GAP_TIME = 5000;//5秒
-        private const int N_RUN_GAP_MAX_TIME = 10;//30秒
+        private const int N_RUN_GAP_MAX_TIME = 30;//30秒
         private const string STR_RUN_FILE = "Run.data";
         private static string m_assitProcessName = "";
         private static bool m_bCheck = false;
@@ -84,16 +84,23 @@ namespace AssistRun
             __Log("3.干掉卡死的程序：" + strProcessName);
             __Log("-----------------------------------");
             Process[] processes = Process.GetProcesses();
-            foreach (var process in processes)
+            try
             {
-                if (null == process)
+                foreach (var process in processes)
                 {
-                    continue;
+                    if (null == process)
+                    {
+                        continue;
+                    }
+                    if (process.ProcessName.Equals(strProcessName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        process.Kill();
+                    }
                 }
-                if (process.ProcessName.Equals(strProcessName, StringComparison.OrdinalIgnoreCase))
-                {
-                    process.Kill();
-                }
+            }
+            catch (Exception)
+            {
+
             }
         }
         //-------------------------------------------------------------------------
@@ -204,14 +211,20 @@ namespace AssistRun
             __Log("nNowTimeStamp - m_nLastRunTimeStamp=" + (nNowTimeStamp - m_nLastRunTimeStamp));
             __Log("bForceReboot=" + m_bForceReboot);
 
-            if (m_bForceReboot || nNowTimeStamp - m_nLastRunTimeStamp > N_RUN_GAP_MAX_TIME)
+            //由于相同账号限制同时登陆，有个间隔时间30s左右在线判断，所以关闭强制重启
+            if (nNowTimeStamp - m_nLastRunTimeStamp > N_RUN_GAP_MAX_TIME)
             {
                 __Log("__CheckRun: RebootProcess===>");
                 __KillProcessByName(m_assitProcessName);
-                __RebootProcess();
 
+                __RebootProcess();
                 m_bRunning = false;
                 Environment.Exit(0);
+            }
+            else if (m_bForceReboot)
+            {
+                __Log("__CheckRun: Kill ProcessName===>");
+                __KillProcessByName(m_assitProcessName);
             }
         }
         //-------------------------------------------------------------------------
