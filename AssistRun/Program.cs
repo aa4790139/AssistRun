@@ -83,24 +83,49 @@ namespace AssistRun
             __Log("-----------------------------------");
             __Log("3.干掉卡死的程序：" + strProcessName);
             __Log("-----------------------------------");
-            Process[] processes = Process.GetProcesses();
             try
             {
-                foreach (var process in processes)
+                var processes = Process.GetProcesses();
+                for (int i = 0; i < processes.Length; i++)
                 {
-                    if (null == process)
+                    var process = processes[i];
+                    try
+                    {
+                        if (process.HasExited)
+                        {
+                            continue;
+                        }
+                    }
+                    catch (Exception)
                     {
                         continue;
                     }
-                    if (process.ProcessName.Equals(strProcessName, StringComparison.OrdinalIgnoreCase))
+
+                    string strPN = string.Empty;
+                    try
                     {
-                        process.Kill();
+                        strPN = process.ProcessName;
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        if (strPN.Contains(strProcessName))
+                        {
+                            process.Kill();
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        continue;
                     }
                 }
             }
             catch (Exception)
             {
-
             }
         }
         //-------------------------------------------------------------------------
@@ -118,17 +143,39 @@ namespace AssistRun
             __Log("当前进程号: " + curProcess.Id);
             __Log("当前进程名: " + curProcess.ProcessName);
 
-            Process[] processes = Process.GetProcesses();
-            foreach (var process in processes)
+            try
             {
-                if (null == process || false == process.ProcessName.Equals(curProcess.ProcessName, StringComparison.OrdinalIgnoreCase))
+                var processes = Process.GetProcesses();
+                for (int i = 0; i < processes.Length; i++)
                 {
-                    continue;
+                    var process = processes[i];
+                    try
+                    {
+                        if (process.HasExited)
+                        {
+                            continue;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        if (process.Id != curProcess.Id)
+                        {
+                            process.Kill();
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
                 }
-                if (process.Id != curProcess.Id)
-                {
-                    process.Kill();
-                }
+            }
+            catch (Exception)
+            {
             }
         }
         //-------------------------------------------------------------------------
