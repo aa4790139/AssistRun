@@ -113,7 +113,7 @@ namespace AssistRun
 
                     try
                     {
-                        if (strPN.Contains(strProcessName))
+                        if (strProcessName.Equals(strPN, StringComparison.OrdinalIgnoreCase))
                         {
                             process.Kill();
                         }
@@ -161,9 +161,19 @@ namespace AssistRun
                         continue;
                     }
 
+                    string strPN = string.Empty;
                     try
                     {
-                        if (process.Id != curProcess.Id)
+                        strPN = process.ProcessName;
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        if (process.Id != curProcess.Id && strPN.Equals(curProcess.ProcessName, StringComparison.OrdinalIgnoreCase))
                         {
                             process.Kill();
                         }
